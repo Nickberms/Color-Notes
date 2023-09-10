@@ -3,23 +3,27 @@ package com.example.colornotes.detail
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,6 +52,13 @@ fun DetailScreen(
     )
     val isNoteIdNotBlank = noteId.isNotBlank()
     val icon = Icons.Default.Check
+    val scope = rememberCoroutineScope()
+    val buttonBackgroundColor =
+        if (detailUiState.title.isNotBlank() || detailUiState.note.isNotBlank()) {
+            Color(0xFF72d572)
+        } else {
+            Color(0xFFf36c60)
+        }
     LaunchedEffect(key1 = Unit) {
         if (isNoteIdNotBlank) {
             detailViewModel?.getNote(noteId)
@@ -59,7 +70,6 @@ fun DetailScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            val scope = rememberCoroutineScope()
             FloatingActionButton(
                 onClick = {
                     if (isNoteIdNotBlank) {
@@ -67,7 +77,7 @@ fun DetailScreen(
                             detailViewModel?.updateNote(noteId)
                         } else {
                             scope.launch {
-                                snackbarHostState.showSnackbar("Please provide some content first.")
+                                snackbarHostState.showSnackbar("Please provide some content first")
                             }
                         }
                     } else {
@@ -75,13 +85,14 @@ fun DetailScreen(
                             detailViewModel?.addNote()
                         } else {
                             scope.launch {
-                                snackbarHostState.showSnackbar("Please provide some content first.")
+                                snackbarHostState.showSnackbar("Please provide some content first")
                             }
                         }
                     }
-                }
+                },
+                containerColor = buttonBackgroundColor
             ) {
-                Icon(imageVector = icon, contentDescription = null)
+                Icon(imageVector = icon, contentDescription = null, tint = Color.Black)
             }
         },
     ) { padding ->
@@ -90,17 +101,18 @@ fun DetailScreen(
                 .fillMaxSize()
                 .background(color = selectedColor)
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
         ) {
             LaunchedEffect(detailUiState.noteAddedStatus) {
                 if (detailUiState.noteAddedStatus) {
-                    snackbarHostState.showSnackbar("Added Note Successfully")
+                    snackbarHostState.showSnackbar("Your note has been added")
                     detailViewModel?.resetNoteAddedStatus()
                     onNavigate.invoke()
                 }
             }
             LaunchedEffect(detailUiState.updateNoteStatus) {
                 if (detailUiState.updateNoteStatus) {
-                    snackbarHostState.showSnackbar("Note Updated Successfully")
+                    snackbarHostState.showSnackbar("Your note has been updated")
                     detailViewModel?.resetNoteAddedStatus()
                     onNavigate.invoke()
                 }
@@ -119,24 +131,38 @@ fun DetailScreen(
                     }
                 }
             }
-            OutlinedTextField(
+            val borderColor = Color.Black
+            val borderWidth = 2.dp
+            val paddingModifier = Modifier.padding(8.dp)
+            TextField(
                 value = detailUiState.title,
                 onValueChange = {
                     detailViewModel?.onTitleChange(it)
                 },
-                label = { Text(text = "Title") },
+                label = { Text(text = "Enter your note title here") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp)
+                    .weight(0.3f)
+                    .then(paddingModifier)
+                    .border(
+                        width = borderWidth,
+                        color = borderColor,
+                        shape = RoundedCornerShape(4.dp)
+                    )
             )
-            OutlinedTextField(
+            TextField(
                 value = detailUiState.note,
                 onValueChange = { detailViewModel?.onNoteChange(it) },
-                label = { Text(text = "Notes") },
+                label = { Text(text = "Enter your note contents here") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(8.dp)
+                    .then(paddingModifier)
+                    .border(
+                        width = borderWidth,
+                        color = borderColor,
+                        shape = RoundedCornerShape(4.dp)
+                    )
             )
         }
     }
